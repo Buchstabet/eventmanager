@@ -24,7 +24,7 @@ public class EventLoader {
     this(new ArrayList<>());
   }
 
-  public <V extends Event> void call(V v) {
+  public <V extends Event> void throwEvent(V v) {
     eventClasses.stream().filter(eventMethod -> eventMethod.getEvent().isInstance(v)).forEach(eventMethod -> {
       try {
         eventMethod.getMethod().invoke(eventMethod.getInstance(), v);
