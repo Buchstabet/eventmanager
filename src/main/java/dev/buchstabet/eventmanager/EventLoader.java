@@ -30,7 +30,7 @@ public class EventLoader {
    * @param v The event that is to be triggered.
    */
   public <V extends Event> void throwEvent(V v) {
-    eventClasses.stream().filter(eventMethod -> eventMethod.getEvent().isInstance(v)).forEach(eventMethod -> {
+    new ArrayList<>(eventClasses).stream().filter(eventMethod -> eventMethod.getEvent().isInstance(v)).forEach(eventMethod -> {
       try {
         eventMethod.getMethod().invoke(eventMethod.getInstance(), v);
       } catch (Exception e) {
