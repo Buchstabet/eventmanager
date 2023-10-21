@@ -53,5 +53,8 @@ public class EventLoader {
     eventClasses.addAll(collect);
   }
 
+  public void unregister(Object instance) {
+    eventClasses.removeIf(eventMethod -> eventMethod.getInstance().equals(instance));
+  }
 
 }
