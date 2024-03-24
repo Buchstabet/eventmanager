@@ -1,8 +1,8 @@
 package dev.buchstabet.eventmanager;
 
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +32,7 @@ public class EventLoader
   public <V extends Event> void throwEvent(V v)
   {
     new ArrayList<>(eventClasses).stream()
-        .filter(eventMethod -> isInstanceAndSameGeneric(eventMethod, v)).forEach(eventMethod ->
+        .filter(eventMethod -> eventMethod.getEvent().isInstance(v)).forEach(eventMethod ->
         {
           try
           {
@@ -44,47 +44,39 @@ public class EventLoader
         });
   }
 
-  private <V extends Event> boolean isInstanceAndSameGeneric(EventMethod eventMethod, V v)
-  {
-    Class<?> targetClass = eventMethod.getEvent();
-    Type targetGeneric = v.getClass();
-
-    if (targetClass.isInstance(v.getClass()))
-    {
-      Type genericType = targetClass.getGenericSuperclass();
-      if (genericType instanceof ParameterizedType)
-      {
-        Type[] actualGenerics = ((ParameterizedType) genericType).getActualTypeArguments();
-        for (Type t : actualGenerics)
-        {
-          if (t.equals(targetGeneric))
-          {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
 
   public void register(Object o) throws EventException
   {
     register(o, o.getClass());
   }
 
-  public void register(Object o, Class<?> clazz) throws EventException
+  public void register(Object o, Method[] methods) throws EventException
   {
-    List<EventMethod> collect = Arrays.stream(clazz.getDeclaredMethods())
-        .filter(method -> method.getParameterTypes().length == 1).filter(
-            method -> Arrays.asList(method.getParameterTypes()[0].getInterfaces())
-                .contains(Event.class))
-        .filter(method -> method.isAnnotationPresent(EventManager.class)).map(
-            method -> new EventMethod(method,
-                (Class<? extends Event>) method.getParameterTypes()[0], o))
-        .collect(Collectors.toList());
+    List<EventMethod> collect =
+        Arrays.stream(methods).filter(method -> method.getParameterTypes().length == 1)
+            .filter(method -> checkForEvent(method.getParameterTypes()[0]))
+            .filter(method -> !Modifier.isAbstract(method.getModifiers()))
+            .filter(method -> method.isAnnotationPresent(EventManager.class)).map(
+                method -> new EventMethod(method,
+                    (Class<? extends Event>) method.getParameterTypes()[0], o)).toList();
     eventClasses.addAll(collect);
+  }
+
+  private boolean checkForEvent(Class<?> parameterType)
+  {
+    return Event.class.isAssignableFrom(parameterType);
+  }
+
+  public void register(Object o, Class<?> clazz)
+  {
+    List<Class<?>> classesToHandle = new ArrayList<>();
+    do
+    {
+      classesToHandle.add(clazz);
+      clazz = clazz.getSuperclass();
+    } while (clazz != null && !clazz.equals(Object.class));
+
+    classesToHandle.forEach(aClass -> register(o, aClass.getDeclaredMethods()));
   }
 
   public void unregister(Object instance)
