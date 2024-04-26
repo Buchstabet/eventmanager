@@ -28,11 +28,23 @@ public class EventLoader {
 
   public EventLoader(List<EventMethod> eventClasses) {
     this.eventClasses = eventClasses;
-    this.executorService = Executors.newSingleThreadExecutor(r -> new Thread(r, "EventManager"));
+    this.executorService =
+        Executors.newSingleThreadExecutor(
+            r -> {
+              Thread thread = new Thread(r, "EventManager");
+              thread.setDaemon(true);
+              return thread;
+            });
   }
 
   public EventLoader() {
-    this(Executors.newSingleThreadExecutor(r -> new Thread(r, "EventManager")));
+    this(
+        Executors.newSingleThreadExecutor(
+            r -> {
+              Thread thread = new Thread(r, "EventManager");
+              thread.setDaemon(true);
+              return thread;
+            }));
   }
 
   /**
