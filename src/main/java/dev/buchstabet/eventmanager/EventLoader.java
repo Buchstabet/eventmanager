@@ -105,9 +105,6 @@ public class EventLoader {
     }
   }
 
-  public void registerAll(List<Object> o) {
-    o.forEach(this::register);
-  }
 
   public void unregister(Object instance) {
     eventClasses.removeIf(eventMethod -> eventMethod.getInstance().equals(instance));
