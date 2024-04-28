@@ -103,6 +103,10 @@ public class EventLoader {
     for (Class<?> aClass : parameterType) register(aClass);
   }
 
+  public void registerAll(List<Class<?>> parameterType) {
+    parameterType.forEach(this::register);
+  }
+
   public void unregister(Object instance) {
     eventClasses.removeIf(eventMethod -> eventMethod.getInstance().equals(instance));
   }
