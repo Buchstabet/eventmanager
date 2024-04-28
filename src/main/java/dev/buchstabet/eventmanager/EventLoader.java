@@ -99,6 +99,10 @@ public class EventLoader {
     classesToHandle.forEach(aClass -> register(o, aClass.getDeclaredMethods()));
   }
 
+  public void registerAll(Class<?>... parameterType) {
+    for (Class<?> aClass : parameterType) register(aClass);
+  }
+
   public void unregister(Object instance) {
     eventClasses.removeIf(eventMethod -> eventMethod.getInstance().equals(instance));
   }
