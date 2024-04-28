@@ -99,12 +99,14 @@ public class EventLoader {
     classesToHandle.forEach(aClass -> register(o, aClass.getDeclaredMethods()));
   }
 
-  public void registerAll(Class<?>... parameterType) {
-    for (Class<?> aClass : parameterType) register(aClass);
+  public void registerAll(Object... o) {
+    for (Object object : o) {
+      register(object);
+    }
   }
 
-  public void registerAll(List<Class<?>> parameterType) {
-    parameterType.forEach(this::register);
+  public void registerAll(List<Object> o) {
+    o.forEach(this::register);
   }
 
   public void unregister(Object instance) {
