@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class EventLoader
 {
@@ -42,21 +44,34 @@ public class EventLoader
   /**
    * @param v The event that is to be triggered.
    */
-  public <V extends Event> void throwEvent(V v)
+  public <V extends Event> void throwEvent(V v, Predicate<EventMethod> predicate) throws EventException
   {
-    new ArrayList<>(eventClasses).stream().filter(eventMethod -> eventMethod.getEvent().isInstance(v))
-            .forEach(eventMethod -> {
-              Runnable r = () -> {
-                try {
-                  eventMethod.getMethod().invoke(eventMethod.getInstance(), v);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                  throw new RuntimeException(e);
-                }
+    throwEventStream(new ArrayList<>(eventClasses).stream().filter(predicate), v);
+  }
 
-              };
-              if (executorService == null || executorService.isShutdown() || executorService.isTerminated()) r.run();
-              else executorService.execute(r);
-            });
+  /**
+   * @param v The event that is to be triggered.
+   */
+  public <V extends Event> void throwEvent(V v) throws EventException
+  {
+    throwEventStream(new ArrayList<>(eventClasses).stream(), v);
+
+  }
+
+  private <V extends Event> void throwEventStream(Stream<EventMethod> stream, V v)
+  {
+    stream.filter(eventMethod -> eventMethod.getEvent().isInstance(v)).forEach(eventMethod -> {
+      Runnable r = () -> {
+        try {
+          eventMethod.getMethod().invoke(eventMethod.getInstance(), v);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+          throw new RuntimeException(e);
+        }
+
+      };
+      if (executorService == null || executorService.isShutdown() || executorService.isTerminated()) r.run();
+      else executorService.execute(r);
+    });
   }
 
   public void register(Object o) throws EventException
